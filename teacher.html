@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교무실 수신기</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        :root { --bg-color: #020408; --glass-bg: rgba(255, 255, 255, 0.015); --glass-border: rgba(255, 255, 255, 0.05); --glass-highlight: rgba(255, 255, 255, 0.08); --text-main: #f5f5f7; --text-sub: #86868b; --accent-color: #2997ff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard", sans-serif; letter-spacing: -0.02em; }
+        body { background-color: var(--bg-color); background-image: radial-gradient(at 0% 0%, rgba(41, 151, 255, 0.08) 0px, transparent 40%), radial-gradient(at 100% 0%, rgba(161, 85, 255, 0.06) 0px, transparent 40%), radial-gradient(at 50% 100%, rgba(0, 242, 254, 0.05) 0px, transparent 50%); background-attachment: fixed; color: var(--text-main); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+
+        .theme-toggle-btn { position: fixed; top: 30px; right: 30px; width: 44px; height: 44px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 1.2rem; cursor: pointer; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 100; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; }
+        .theme-toggle-btn:hover { transform: scale(1.1); background: rgba(150, 150, 150, 0.1); }
+
+        .receiver-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-radius: 24px; padding: 60px 40px; width: 100%; max-width: 700px; text-align: center; display: flex; flex-direction: column; gap: 30px; transition: all 0.3s; backdrop-filter: blur(40px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        @keyframes alertFlash {
+            0% { box-shadow: 0 0 0 rgba(41, 151, 255, 0); transform: scale(1); background: var(--glass-bg); }
+            50% { box-shadow: 0 0 50px rgba(41, 151, 255, 0.8); transform: scale(1.02); background: rgba(41, 151, 255, 0.1); }
+            100% { box-shadow: 0 0 0 rgba(41, 151, 255, 0); transform: scale(1); background: var(--glass-bg); }
+        }
+        .flash-active { animation: alertFlash 1.5s ease-out; }
+
+        .header-title { font-size: 1.2rem; font-weight: 600; color: var(--text-sub); text-transform: uppercase; }
+        .log-display { font-size: 2.2rem; font-weight: 700; color: var(--text-main); min-height: 150px; display: flex; align-items: center; justify-content: center; line-height: 1.5; word-break: keep-all; transition: color 0.3s; }
+
+        .start-btn { padding: 20px 40px; background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 18px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; }
+        .start-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        .confirm-btn { padding: 20px 40px; background: var(--accent-color); color: #fff; border: none; border-radius: 18px; font-size: 1.4rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 20px rgba(41, 151, 255, 0.3); display: none; margin-top: 10px; }
+        .confirm-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(41, 151, 255, 0.4); background: #1a85eb; }
+        
+        .voice-select { padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); font-size: 1rem; width: 100%; max-width: 300px; margin: 0 auto; appearance: none; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .voice-select option { background: var(--bg-color); color: var(--text-main); }
+
+        /* 다크/라이트 모드 설정 */
+        body.light-mode { --bg-color: #f5f5f7; --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(0, 0, 0, 0.08); --glass-highlight: rgba(255, 255, 255, 0.6); --text-main: #1d1d1f; --text-sub: #515154; --accent-color: #0066cc; }
+        body.light-mode .receiver-card { background: rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        body.light-mode .start-btn { background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        body.light-mode .voice-select { background: rgba(0, 0, 0, 0.03); color: var(--text-main); }
+        body.light-mode .voice-select option { background: #fff; color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <button id="themeToggle" class="theme-toggle-btn">🌙</button>
+    
+    <audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <div class="receiver-card" id="receiverCard">
+        <div class="header-title">교무실 알림 시스템</div>
+        
+        <div id="log" class="log-display">대기 중...</div>
+        
+        <button id="confirmBtn" class="confirm-btn">✔️ 선생님 확인 완료</button>
+
+        <button id="startBtn" class="start-btn">🔔 알림 수신 시작하기</button>
+        <select id="voiceSelect" class="voice-select">
+            <option value="">목소리 불러오는 중...</option>
+        </select>
+    </div>
+
+    <script type="module" src="teacher.js"></script>
+    <script>
+        // 테마 로직 연동
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('spotlight_theme') === 'light') {
+            body.classList.add('light-mode');
+            themeToggleBtn.innerText = '☀️';
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            localStorage.setItem('spotlight_theme', body.classList.contains('light-mode') ? 'light' : 'dark');
+            themeToggleBtn.innerText = body.classList.contains('light-mode') ? '☀️' : '🌙';
+        });
+    </script>
+</body>
+</html>

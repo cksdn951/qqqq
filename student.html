@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 호출기</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        :root { --bg-color: #020408; --glass-bg: rgba(255, 255, 255, 0.015); --glass-border: rgba(255, 255, 255, 0.05); --glass-highlight: rgba(255, 255, 255, 0.08); --text-main: #f5f5f7; --text-sub: #86868b; --accent-color: #2997ff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard", sans-serif; letter-spacing: -0.02em; }
+        body { background-color: var(--bg-color); background-image: radial-gradient(at 0% 0%, rgba(41, 151, 255, 0.08) 0px, transparent 40%), radial-gradient(at 100% 0%, rgba(161, 85, 255, 0.06) 0px, transparent 40%), radial-gradient(at 50% 100%, rgba(0, 242, 254, 0.05) 0px, transparent 50%); background-attachment: fixed; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+        
+        .theme-toggle-btn { position: fixed; top: 30px; right: 30px; width: 44px; height: 44px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 1.2rem; cursor: pointer; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 100; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; }
+        .theme-toggle-btn:hover { transform: scale(1.1); background: rgba(150, 150, 150, 0.1); }
+
+        .kiosk-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-radius: 24px; padding: 50px 40px; width: 100%; max-width: 520px; backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; }
+
+        .clock-display { font-size: 3.5rem; font-weight: 800; margin-bottom: 30px; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,255,255,0.1); font-variant-numeric: tabular-nums; }
+        
+        .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .custom-input, .custom-select { width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-radius: 14px; color: var(--text-main); font-size: 1rem; transition: all 0.4s; text-align: center; appearance: none; cursor: pointer; }
+        .custom-input::placeholder { color: var(--text-sub); }
+        .custom-input:focus, .custom-select:focus { outline: none; border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px rgba(0, 0, 0, 0.4); }
+        .custom-select option { background: var(--bg-color); color: var(--text-main); }
+
+        .call-btn { width: 100%; padding: 18px; margin-top: 15px; background: var(--accent-color); color: #fff; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 20px rgba(41, 151, 255, 0.3); }
+        .call-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(41, 151, 255, 0.4); background: #1a85eb; }
+
+        body.light-mode { --bg-color: #f5f5f7; --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(0, 0, 0, 0.08); --glass-highlight: rgba(255, 255, 255, 0.6); --text-main: #1d1d1f; --text-sub: #515154; --accent-color: #0066cc; }
+        body.light-mode .kiosk-card { background: rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        body.light-mode .custom-input, body.light-mode .custom-select { background: rgba(0, 0, 0, 0.03); color: var(--text-main); }
+        body.light-mode .custom-input:focus, body.light-mode .custom-select:focus { background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        body.light-mode .custom-select option { background: #fff; color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <button id="themeToggle" class="theme-toggle-btn">🌙</button>
+
+    <div class="kiosk-card">
+        <div id="clock" class="clock-display">00:00:00</div>
+        
+        <div class="input-row">
+            <select id="grade" class="custom-select">
+                <option value="" disabled selected>학년</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+            </select>
+            <select id="classNum" class="custom-select">
+                <option value="" disabled selected>반</option>
+                <script>
+                    for(let i=1; i<=15; i++) document.write(`<option value="${i}">${i}반</option>`);
+                </script>
+            </select>
+            <input type="number" id="studentNum" class="custom-input" placeholder="번호" min="1" max="40">
+        </div>
+
+        <div class="input-row">
+            <input type="text" id="studentName" class="custom-input" placeholder="이름 (예: 홍길동)">
+        </div>
+        
+        <div class="input-row">
+            <select id="purpose" class="custom-select">
+                <option value="" disabled selected>용무를 선택하세요</option>
+                <option value="학습 질문">학습 질문</option>
+                <option value="수행평가 제출/확인">수행평가 제출/확인</option>
+                <option value="진로 및 학업 상담">진로 및 학업 상담</option>
+                <option value="기타 방문">기타 방문</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <select id="teacherName" class="custom-select">
+                <option value="" disabled selected>찾으시는 선생님을 선택하세요</option>
+                <option value="박윤성">박윤성 선생님</option>
+                <option value="장한용">장한용 선생님</option>
+                <option value="김태원">김태원 선생님</option>
+            </select>
+        </div>
+
+        <button id="callBtn" class="call-btn">호출하기</button>
+    </div>
+
+    <script type="module" src="student.js"></script>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clock').innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('spotlight_theme') === 'light') {
+            body.classList.add('light-mode');
+            themeToggleBtn.innerText = '☀️';
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            localStorage.setItem('spotlight_theme', body.classList.contains('light-mode') ? 'light' : 'dark');
+            themeToggleBtn.innerText = body.classList.contains('light-mode') ? '☀️' : '🌙';
+        });
+    </script>
+</body>
+</html>
